@@ -1,0 +1,23 @@
+version: '3.1'
+
+services:
+  mysql:
+    image: mysql:8.0.34
+    container_name: financas-pessoais-bd
+    environment:
+      - MYSQL_HOST=localhost
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=financas
+      - MYSQL_USER=financas
+      - MYSQL_PASSWORD=financas
+      - MYSQL_ROOT_PASSWORD=financas
+    ports:
+      - "3307:3306"  # Porta no host mapeada para a porta padrão do MySQL no contêiner
+    networks:
+      - app-network  # Rede customizada para comunicação entre contêineres
+    volumes:
+      - "./data/mysql/:/var/lib/mysql"
+
+networks:
+  app-network:
+    driver: bridge  # Rede bridge para comunicação entre contêineres

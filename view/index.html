@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Gastos - Electron</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+    <script defer src="../renderer/renderer-index.js"></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+</head>
+
+<body>
+<div class="ui container" style="margin-top: 20px;">
+    <h2 class="ui center aligned header">Controle de Gastos Pessoal</h2>
+
+    <!-- Formulário de Adição -->
+    <div class="ui segment">
+        <form class="ui form" id="financeForm">
+            <div class="fields" style="flex-wrap: wrap;flex-basis: 33.3333%">
+                <div class="three wide field">
+                    <label for="type">Tipo</label>
+                    <select id="type" class="ui dropdown">
+                        <option value="Receita">Receita</option>
+                        <option value="Despesa">Despesa</option>
+                    </select>
+                </div>
+                <div class="six wide field">
+                    <label for="description">Descrição</label>
+                    <input type="text" id="description" placeholder="Descrição">
+                </div>
+                <div class="three wide field">
+                    <label for="categoria">Categoria</label>
+                    <select id="categoria" class="ui dropdown">
+                        <option>Selecione uma categoria</option>
+                        <option value="ALIMENTACAO">Alimentação</option>
+                        <option value="MORADIA">Moradia</option>
+                        <option value="LASER">Laser</option>
+                        <option value="BEM_ESTAR">Bem estar</option>
+                        <option value="TRANSPORTE">Transporte</option>
+                        <option value="SALARIO">Salário</option>
+                        <option value="DIVIDENDOS">Dividendos</option>
+                        <option value="SERVICOS">Serviços</option>
+                        <option value="OUTROS">Outros</option>
+                    </select>
+                </div>
+                <div class="three wide field">
+                    <label for="amount">Valor</label>
+                    <input type="text" id="amount" placeholder="Valor">
+                </div>
+                <div class="two wide field" id="parcelasContainer" style="display: none;">
+                    <label for="installments">Parcelas</label>
+                    <input type="number" id="installments" placeholder="Parcelas" min="1" value="1">
+                </div>
+                <div class="three wide field">
+                    <label for="startDate">Data</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="three wide field" id="statusContainer" style="display: none;">
+                    <label for="status">Status</label>
+                    <select id="status" class="ui dropdown">
+                        <option value="PENDENTE" selected>Pendente</option>
+<!--                        <option value="VENCIDA">Vencida</option>-->
+                        <option value="PAGA">Paga</option>
+                    </select>
+                </div>
+                <div class="three wide field" id="vencimentoContainer" style="display: none;">
+                    <label for="dataVencimento">Data Vencimento</label>
+                    <input type="date" id="dataVencimento">
+                </div>
+                <div class="three wide field" id="pagamentoContainer" style="display: none;">
+                    <label for="dataPagamento">Data Pagamento</label>
+                    <input type="date" id="dataPagamento">
+                </div>
+                <!-- Campo de Recorrente Centralizado -->
+                <div class="field inline" id="recorrenteContainer" style="display: flex; align-items: end;padding-bottom: 2px">
+                    <div class="ui checkbox">
+                        <input id="recorrente" type="checkbox" tabindex="0" class="hidden">
+                        <label for="recorrente">Recorrente</label>
+                    </div>
+                </div>
+                <div class="two wide field">
+                    <label>&nbsp;</label>
+                    <button type="button" id="addBtn" class="ui green button">Adicionar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Filtro por Mês -->
+    <div class="ui segment">
+        <div class="ui form">
+            <div class="inline fields">
+                <div class="six wide field">
+                    <label for="monthFilter">Filtrar por Mês</label>
+                    <div class="ui icon input">
+                        <input type="month" id="monthFilter" value="2024-10">
+                        <i class="calendar alternate outline icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Registros -->
+    <div class="ui segment">
+        <h4 class="ui dividing header">Registros de Receitas e Despesas</h4>
+        <table class="ui celled table">
+            <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Parcelas</th>
+                <th>Status</th>
+                <th>Ação</th>
+            </tr>
+            </thead>
+            <tbody id="financeTable">
+            <!-- Registros serão adicionados aqui -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Total de Receitas, Despesas e Saldo -->
+    <div class="ui segment">
+        <h4 class="ui dividing header">Totais</h4>
+        <p class="lead">Total de Receitas: <span id="totalReceitas">R$ 0,00</span></p>
+        <p class="lead">Total de Despesas: <span id="totalDespesas">R$ 0,00</span></p>
+        <p class="lead">Saldo: <span id="saldoFinal">R$ 0,00</span></p>
+    </div>
+
+    <!-- Gráfico de Pizza de Receitas e Despesas -->
+    <div class="ui segment">
+        <h4 class="ui dividing header">Gráfico de Receitas e Despesas</h4>
+        <div id="chartContainer" style="height: 400px;"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+</body>
+
+</html>
