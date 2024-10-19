@@ -1,1 +1,4 @@
-./node_modules
+/docker/data/
+/node_modules/
+/docker/data/mysql/
+/docker/data/**
