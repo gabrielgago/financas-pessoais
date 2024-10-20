@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const Conta = require('../model/Transacao');
+const Transacao = require('../model/Transacao');
 
 class TransacaoRepository {
     constructor() {
@@ -27,39 +27,45 @@ class TransacaoRepository {
 
     // Método para buscar todas as contas
     async findAll() {
+        await this.ensureConnection();
         const [rows] = await this.connection.query('SELECT * FROM tb_transacoes');
-        return rows.map(row => new Conta(
+        return rows.map(row => new Transacao(
             row.id,
             row.descricao,
             row.tipo,
             row.categoria,
-            row.parcelas,
+            row.parcela,
             row.valor,
-            row.dataVencimento,
-            row.dataPagamento,
-            row.dataCriacao,
-            row.status
+            row.data_vencimento,
+            row.data_pagamento,
+            row.data_transacao,
+            row.status,
+            row.recorrente,
+            row.numero_parcelas
         ));
     }
 
     // Método para buscar uma conta por ID
     async findById(id) {
+        await this.ensureConnection();
         const [rows] = await this.connection.query('SELECT * FROM tb_transacoes WHERE id = ?', [id]);
         if (rows.length === 0) {
             return null;
         }
         const row = rows[0];
-        return new Conta(
+        return new Transacao(
             row.id,
             row.descricao,
             row.tipo,
             row.categoria,
-            row.parcelas,
+            row.parcela,
             row.valor,
-            row.dataVencimento,
-            row.dataPagamento,
-            row.dataCriacao,
-            row.status
+            row.data_vencimento,
+            row.data_pagamento,
+            row.data_transacao,
+            row.status,
+            row.recorrente,
+            row.numero_parcelas
         );
     }
 
@@ -67,8 +73,8 @@ class TransacaoRepository {
     async create(transacao) {
         await this.ensureConnection();
         const result = await this.connection.query(
-            'INSERT INTO tb_transacoes (descricao, tipo, categoria, parcelas, valor, data_vencimento, data_pagamento, created_at, status, recorrente) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [transacao.descricao, transacao.tipo, transacao.categoria, transacao.parcelas, transacao.valor, transacao.dataVencimento, transacao.dataPagamento, transacao.dataCriacao, transacao.status, transacao.recorrente]
+            'INSERT INTO tb_transacoes (descricao, tipo, categoria, parcela, valor, data_vencimento, data_pagamento, data_transacao, status, recorrente, numero_parcelas) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [transacao.descricao, transacao.tipo, transacao.categoria, transacao.parcela, transacao.valor, transacao.dataVencimento, transacao.dataPagamento, transacao.dataTransacao, transacao.status, transacao.recorrente, transacao.parcelas]
         );
         return result.insertId; // Retorna o ID da nova transacao criada
     }
@@ -77,8 +83,8 @@ class TransacaoRepository {
     async update(id, transacao) {
         await this.ensureConnection();
         const result = await this.connection.query(
-            'UPDATE tb_transacoes SET descricao = ?, tipo = ?, categoria = ?, parcelas = ?, valor = ?, data_vencimento = ?, data_pagamento = ? WHERE id = ?',
-            [transacao.descricao, transacao.tipo, transacao.categoria, transacao.parcelas, transacao.valor, transacao.dataVencimento, transacao.dataPagamento, id]
+            'UPDATE tb_transacoes SET descricao = ?, tipo = ?, categoria = ?, parcelas = ?, valor = ?, data_vencimento = ?, data_pagamento = ?, status = ?, recorrente = ?, numero_parcelas = ? WHERE id = ?',
+            [transacao.descricao, transacao.tipo, transacao.categoria, transacao.parcela, transacao.valor, transacao.dataVencimento, transacao.dataPagamento, transacao.status, transacao.recorrente, transacao.numeroParcelas, id]
         );
         return result.affectedRows; // Retorna o número de linhas afetadas
     }
@@ -87,6 +93,25 @@ class TransacaoRepository {
     async delete(id) {
         await this.ensureConnection();
         const result = await this.connection.query('DELETE FROM tb_transacoes WHERE id = ?', [id]);
+        return result.affectedRows; // Retorna o número de linhas deletadas
+    }
+
+    // Método para deletar uma conta
+    async pagar(id) {
+        await this.ensureConnection();
+        const result = await this.connection.query('UPDATE tb_transacoes SET status = \'PAGO\', data_pagamento = CURDATE() WHERE id = ?', [id]);
+        return result.affectedRows; // Retorna o número de linhas deletadas
+    }
+
+    async alterarVencimento(id, newVencimento) {
+        await this.ensureConnection();
+        const result = await this.connection.query('UPDATE tb_transacoes SET data_vencimento = ? WHERE id = ?', [newVencimento, id]);
+        return result.affectedRows; // Retorna o número de linhas deletadas
+    }
+
+    async atualizarStatus(id, status) {
+        await this.ensureConnection();
+        const result = await this.connection.query('UPDATE tb_transacoes SET status = ? WHERE id = ?', [status, id]);
         return result.affectedRows; // Retorna o número de linhas deletadas
     }
 }

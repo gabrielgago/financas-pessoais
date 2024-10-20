@@ -2,8 +2,18 @@
 const {app, BrowserWindow, Tray, Menu, ipcMain} = require('electron');
 const path = require('path');
 const knex = require('knex')(require('./knexfile').development);
+const cron = require('node-cron');
 const TransacaoRepository = require('./repository/TransacaoRepository');
+const {atualizarStatusVencidos} = require('./services/TransacaoService');
+
 const transacaoRepository = new TransacaoRepository();
+
+// Agendar a verificação diária às 00:00 (meia-noite)
+cron.schedule('0 0 * * *', () => {
+    console.log('Verificando status de vencimento...');
+    // Chamar a função para atualizar o status de vencidos
+    atualizarStatusVencidos();
+});
 
 async function runMigrations() {
     try {
@@ -15,12 +25,13 @@ async function runMigrations() {
 }
 
 runMigrations();
-
+atualizarStatusVencidos();
 
 // Incluir o electron-reload para fazer hot reload
 require('electron-reload')(path.join(__dirname), {
     electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
-    ignored: /node_modules|[/\\]\./ // Ignorar arquivos desnecessários
+    ignored: /node_modules|[/\\]\.|docker/ // Ignorar arquivos desnecessários
+    // ignored: /node_modules|[/\\]\./ // Ignorar arquivos desnecessários
 });
 
 
@@ -95,17 +106,39 @@ app.on('activate', () => {
 });
 
 ipcMain.handle('get-all-transacoes', async () => {
-    return await transacaoRepository.findAll();
+    try {
+        return await transacaoRepository.findAll();
+    } catch (error) {
+        console.error('Erro ao obter transações:', error);
+        return [];
+    }
 });
 
-ipcMain.handle('create-transacao', async (transacao) => {
-    return await transacaoRepository.create(transacao);
+ipcMain.handle('create-transacao', async (event, transacao) => {
+    try {
+        await transacaoRepository.create(transacao);
+        return {success: true};
+    } catch (error) {
+        console.error('Erro ao criar transação:', error);
+        return {success: false, error: error.message};
+    }
+});
+
+ipcMain.handle('pagar-transacao', async (event, transacao) => {
+    return await transacaoRepository.pagar(transacao);
+});
+
+ipcMain.handle('alterar-vencimento-transacao', async (event, id, newVencimento) => {
+    return await transacaoRepository.alterarVencimento(id, newVencimento);
+});
+
+ipcMain.handle('alterar-status-transacao', async (event, id, status) => {
+    return await transacaoRepository.atualizarStatus(id, status);
 });
 
 ipcMain.handle('delete-transacao', async (event, id) => {
     try {
-        const result = await transacaoRepository.delete(id);
-        return result;
+        return await transacaoRepository.delete(id);
     } catch (error) {
         console.error('Erro ao deletar transacao:', error);
         throw error;

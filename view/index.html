@@ -5,14 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Controle de Gastos - Electron</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
-    <script defer src="../renderer/renderer-index.js"></script>
+
     <script src="https://code.highcharts.com/highcharts.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.semanticui.min.js"></script>
+    <script defer src="../renderer/renderer-index.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.semanticui.min.css">
+
 </head>
 
 <body>
-<div class="ui container" style="margin-top: 20px;">
+<div class="ui container" style="margin-top: 20px;width: 90%">
     <h2 class="ui center aligned header">Controle de Gastos Pessoal</h2>
 
     <!-- Formulário de Adição -->
@@ -21,7 +28,7 @@
             <div class="fields" style="flex-wrap: wrap;flex-basis: 33.3333%">
                 <div class="three wide field">
                     <label for="type">Tipo</label>
-                    <select id="type" class="ui dropdown">
+                    <select id="type" class="ui selection dropdown">
                         <option value="Receita">Receita</option>
                         <option value="Despesa">Despesa</option>
                     </select>
@@ -32,8 +39,10 @@
                 </div>
                 <div class="three wide field">
                     <label for="categoria">Categoria</label>
-                    <select id="categoria" class="ui dropdown">
-                        <option>Selecione uma categoria</option>
+                    <select id="categoria" class="ui selection dropdown">
+                        <option value="">Selecione uma categoria</option>
+                        <option value="CARTAO_CREDITO">Cartão Crédito</option>
+                        <option value="CARTAO_DEBITO">Cartão Débito</option>
                         <option value="ALIMENTACAO">Alimentação</option>
                         <option value="MORADIA">Moradia</option>
                         <option value="LASER">Laser</option>
@@ -42,6 +51,9 @@
                         <option value="SALARIO">Salário</option>
                         <option value="DIVIDENDOS">Dividendos</option>
                         <option value="SERVICOS">Serviços</option>
+                        <option value="INVESTIMENTO">Investimento</option>
+                        <option value="EDUCACAO">Educação</option>
+                        <option value="SAUDE">Saúde</option>
                         <option value="OUTROS">Outros</option>
                     </select>
                 </div>
@@ -54,15 +66,16 @@
                     <input type="number" id="installments" placeholder="Parcelas" min="1" value="1">
                 </div>
                 <div class="three wide field">
-                    <label for="startDate">Data</label>
-                    <input type="date" id="startDate">
+                    <label for="dataTransacao">Data da transação</label>
+                    <input type="date" id="dataTransacao">
                 </div>
                 <div class="three wide field" id="statusContainer" style="display: none;">
                     <label for="status">Status</label>
                     <select id="status" class="ui dropdown">
                         <option value="PENDENTE" selected>Pendente</option>
-<!--                        <option value="VENCIDA">Vencida</option>-->
-                        <option value="PAGA">Paga</option>
+                        <option value="VENCIDO">Vencido</option>
+                        <option value="PAGO">Paga</option>
+                        <option value="RECEBIDO">Recebido</option>
                     </select>
                 </div>
                 <div class="three wide field" id="vencimentoContainer" style="display: none;">
@@ -104,24 +117,27 @@
     </div>
 
     <!-- Tabela de Registros -->
-    <div class="ui segment">
+    <div class="ui segment" style="overflow-x: auto; width: 100%;">
         <h4 class="ui dividing header">Registros de Receitas e Despesas</h4>
-        <table class="ui celled table">
+        <table class="ui celled table" id="tb_transacoes">
             <thead>
             <tr>
-                <th>Tipo</th>
-                <th>Descrição</th>
-                <th>Data</th>
-                <th>Valor</th>
-                <th>Parcelas</th>
-                <th>Status</th>
-                <th>Ação</th>
+                <th colspan="1">Tipo</th>
+                <th colspan="1">Descrição</th>
+                <th colspan="1">Data Transação</th>
+                <th colspan="1">Data Vencimento</th>
+                <th colspan="1">Data Pagamento</th>
+                <th colspan="1">Valor</th>
+                <th colspan="1">Parcelas</th>
+                <th colspan="1">Status</th>
+                <th colspan="1">Ação</th>
             </tr>
             </thead>
             <tbody id="financeTable">
             <!-- Registros serão adicionados aqui -->
             </tbody>
         </table>
+
     </div>
 
     <!-- Total de Receitas, Despesas e Saldo -->

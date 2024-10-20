@@ -17,6 +17,8 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.6.0",
     "knex": "^3.1.0",
-    "mysql2": "^3.11.3"
+    "moment": "^2.30.1",
+    "mysql2": "^3.11.3",
+    "node-cron": "^3.0.3"
   }
 }

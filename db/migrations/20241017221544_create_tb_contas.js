@@ -12,7 +12,7 @@ exports.up = function(knex) {
         table.float('valor', 9, 2).notNullable();
         table.timestamp('data_vencimento').nullable();
         table.timestamp('data_pagamento').nullable();
-        table.timestamp('created_at').defaultTo(knex.fn.now());
+        table.timestamp('data_transacao').defaultTo(knex.fn.now());
     });
 };
 
